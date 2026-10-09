@@ -25,57 +25,105 @@ export default function EvidenceCapture({
   const [stream, setStream] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [cameraReady, setCameraReady] = useState(false);
-  const [facingMode, setFacingMode] = useState('environment');
+  const [facingMode, setFacingMode] = useState('user');
+  const [cameraDeviceList, setCameraDeviceList] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState('');
   const [torchOn, setTorchOn] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [previewModalImg, setPreviewModalImg] = useState(null);
 
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Initialize Camera
-  const startCamera = async () => {
+  // Stop active camera stream tracks
+  const stopActiveStream = () => {
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      } catch (e) {
+        console.warn('Track stop error:', e);
+      }
+      streamRef.current = null;
+    }
+  };
+
+  // Initialize Camera with fallback ladder
+  const startCamera = async (deviceId = selectedDeviceId) => {
     setCameraError(null);
     setCameraReady(false);
-
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-    }
+    stopActiveStream();
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera API (getUserMedia) is not supported in this browser or context.');
+        throw new Error('Camera API (getUserMedia) is not supported in this browser context.');
       }
 
-      const constraints = {
-        video: {
-          facingMode: { ideal: facingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      };
+      let mediaStream = null;
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Stage 1: Try with specific deviceId or facingMode + 720p
+      try {
+        const videoConstraints = deviceId
+          ? { deviceId: { exact: deviceId } }
+          : {
+              facingMode: facingMode ? { ideal: facingMode } : undefined,
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            };
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: false
+        });
+      } catch (err1) {
+        console.warn('Preferred camera constraints failed, trying basic video:', err1);
+        // Stage 2: Fallback to basic unconstrained video (works on any laptop/desktop webcam)
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      }
+
+      streamRef.current = mediaStream;
       setStream(mediaStream);
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch(e => console.warn('Play error:', e));
+        videoRef.current.muted = true;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        try {
+          await videoRef.current.play();
           setCameraReady(true);
-        };
+        } catch (e) {
+          console.warn('Play promise waiting for user event:', e);
+        }
+      }
+
+      // Enumerate available video devices
+      if (navigator.mediaDevices.enumerateDevices) {
+        try {
+          const allDevs = await navigator.mediaDevices.enumerateDevices();
+          const videoDevs = allDevs.filter(d => d.kind === 'videoinput');
+          setCameraDeviceList(videoDevs);
+          if (videoDevs.length > 0 && !selectedDeviceId) {
+            setSelectedDeviceId(videoDevs[0].deviceId);
+          }
+        } catch (devErr) {
+          console.warn('Enumerate devices warning:', devErr);
+        }
       }
     } catch (err) {
       console.warn('Camera access issue:', err);
       let message = 'Unable to access camera device.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        message = 'Camera permission was denied. Please allow camera permissions in your browser address bar/settings, then click "Retry Camera".';
+        message = 'Camera permission was denied. Please click the camera or lock icon in your browser address bar and choose "Allow", or check Windows Settings > Privacy & security > Camera, then click "Retry Camera".';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        message = 'No camera device found on this system. You may use the fallback image capture button below to test.';
+        message = 'No camera device found on this system. You can use the fallback image upload or simulation buttons below.';
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        message = 'Camera is currently in use by another application. Please close other camera apps and retry.';
+        message = 'Camera is currently locked or in use by another application (e.g. Teams, Zoom, or Windows Camera). Please close other camera apps and click "Retry Camera".';
+      } else {
+        message = `Camera error: ${err.message || err.name}. You may use the fallback buttons below to proceed.`;
       }
       setCameraError(message);
     }
@@ -84,11 +132,18 @@ export default function EvidenceCapture({
   useEffect(() => {
     startCamera();
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-      }
+      stopActiveStream();
     };
   }, [facingMode]);
+
+  // Keep videoRef in sync with stream
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.muted = true;
+      videoRef.current.play().then(() => setCameraReady(true)).catch(console.warn);
+    }
+  }, [stream]);
 
   const toggleFacingMode = () => {
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
@@ -113,10 +168,16 @@ export default function EvidenceCapture({
 
   // Capture Frame from Video
   const handleCapture = () => {
-    if (!videoRef.current) return;
-    setIsCapturing(true);
-
     const video = videoRef.current;
+    if (!video) return;
+
+    // Fallback: If camera stream has not emitted frames yet, generate realistic simulated frame
+    if (!video.videoWidth || !video.videoHeight) {
+      generateSimulatedTestCard();
+      return;
+    }
+
+    setIsCapturing(true);
     const canvas = canvasRef.current || document.createElement('canvas');
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
@@ -124,7 +185,7 @@ export default function EvidenceCapture({
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     const capturedAt = new Date().toISOString();
 
     setTimeout(() => {
@@ -374,13 +435,90 @@ export default function EvidenceCapture({
           </div>
 
           <div className={`camera-viewport ${torchOn ? 'flash-active' : ''}`}>
-            {cameraError ? (
+            <div className="camera-frame" style={{ display: cameraError ? 'none' : 'block' }}>
+              <video
+                ref={videoRef}
+                playsInline
+                autoPlay
+                muted
+                onPlay={() => setCameraReady(true)}
+                onLoadedMetadata={(e) => {
+                  e.target.play().catch(console.warn);
+                  setCameraReady(true);
+                }}
+                className="camera-video-element"
+              />
+
+              {isCapturing && <div className="shutter-flash" />}
+
+              <div className="corner corner-top-left" />
+              <div className="corner corner-top-right" />
+              <div className="corner corner-bottom-left" />
+              <div className="corner corner-bottom-right" />
+
+              <div className="camera-center-guide">
+                {activeMode === 'sample' ? (
+                  <div className="guide-box sample-guide">
+                    <Camera size={26} />
+                    <span>Align Reagent Reaction</span>
+                  </div>
+                ) : (
+                  <div className="guide-box reference-guide">
+                    <Palette size={26} />
+                    <span>Align Color Reference Card</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="camera-status-pill">
+                <span className={`live-dot ${cameraReady ? '' : 'warn'}`} />
+                <span>{cameraReady ? 'LIVE' : 'INITIALIZING'}</span>
+              </div>
+
+              <div className="camera-top-tools">
+                {cameraDeviceList.length > 1 && (
+                  <select
+                    className="device-select"
+                    value={selectedDeviceId}
+                    onChange={(e) => {
+                      setSelectedDeviceId(e.target.value);
+                      startCamera(e.target.value);
+                    }}
+                    title="Select Camera Device"
+                  >
+                    {cameraDeviceList.map((d, i) => (
+                      <option key={d.deviceId || i} value={d.deviceId}>
+                        {d.label || `Camera ${i + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  className="tool-btn"
+                  onClick={toggleFacingMode}
+                  title="Switch Camera (Front/Back)"
+                >
+                  <RotateCcw size={15} />
+                </button>
+                <button
+                  type="button"
+                  className={`tool-btn ${torchOn ? 'active' : ''}`}
+                  onClick={toggleTorch}
+                  title="Flash / Torch"
+                >
+                  <Zap size={15} />
+                </button>
+              </div>
+            </div>
+
+            {cameraError && (
               <div className="camera-error-banner">
                 <AlertCircle size={36} color="var(--danger-red)" />
-                <p className="error-title">Camera Device Notice</p>
+                <p className="error-title">Camera Notice</p>
                 <p className="error-desc">{cameraError}</p>
                 <div className="error-actions">
-                  <button type="button" className="btn-secondary" onClick={startCamera}>
+                  <button type="button" className="btn-secondary" onClick={() => startCamera()}>
                     <RefreshCw size={14} /> Retry Camera
                   </button>
                   <button
@@ -388,7 +526,7 @@ export default function EvidenceCapture({
                     className="btn-primary"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <Upload size={14} /> Choose Image from Device
+                    <Upload size={14} /> Upload from Device
                   </button>
                   <button
                     type="button"
@@ -396,61 +534,6 @@ export default function EvidenceCapture({
                     onClick={generateSimulatedTestCard}
                   >
                     <Zap size={14} /> Simulate Test Frame
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="camera-frame">
-                <video
-                  ref={videoRef}
-                  playsInline
-                  autoPlay
-                  muted
-                  className="camera-video-element"
-                />
-
-                {isCapturing && <div className="shutter-flash" />}
-
-                <div className="corner corner-top-left" />
-                <div className="corner corner-top-right" />
-                <div className="corner corner-bottom-left" />
-                <div className="corner corner-bottom-right" />
-
-                <div className="camera-center-guide">
-                  {activeMode === 'sample' ? (
-                    <div className="guide-box sample-guide">
-                      <Camera size={26} />
-                      <span>Align Reagent Reaction</span>
-                    </div>
-                  ) : (
-                    <div className="guide-box reference-guide">
-                      <Palette size={26} />
-                      <span>Align Color Reference Card</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="camera-status-pill">
-                  <span className="live-dot" />
-                  <span>{cameraReady ? 'LIVE' : 'INITIALIZING'}</span>
-                </div>
-
-                <div className="camera-top-tools">
-                  <button
-                    type="button"
-                    className="tool-btn"
-                    onClick={toggleFacingMode}
-                    title="Switch Camera (Front/Back)"
-                  >
-                    <RotateCcw size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`tool-btn ${torchOn ? 'active' : ''}`}
-                    onClick={toggleTorch}
-                    title="Flash / Torch"
-                  >
-                    <Zap size={15} />
                   </button>
                 </div>
               </div>

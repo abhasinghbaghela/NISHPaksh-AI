@@ -103,7 +103,6 @@ export default function NewTestWizard() {
 
       // 3. Generate SHA-256 seal
       const sealInput = `${formData.caseId}|${formData.evidenceId}|${formData.timestamp}|${sampleImages.length}|${referenceCard.capturedAt}`;
-      // simple deterministic representation for seal
       let hash = 0;
       for (let i = 0; i < sealInput.length; i++) {
         hash = (hash << 5) - hash + sealInput.charCodeAt(i);
@@ -400,7 +399,6 @@ export default function NewTestWizard() {
           </div>
 
           <div className="analysis-grid">
-            {/* Column 1: Reference Card Calibration */}
             <div className="analysis-box">
               <div className="box-title">
                 <Palette size={16} color="#D97706" />
@@ -427,7 +425,6 @@ export default function NewTestWizard() {
               </p>
             </div>
 
-            {/* Column 2: Sample Chemical Reaction */}
             <div className="analysis-box">
               <div className="box-title">
                 <Layers size={16} color="var(--primary-navy)" />
@@ -752,7 +749,6 @@ Statutory Note:    Electronic Evidence Certified under IEA 65B
           )}
         </div>
       )}
-
     </div>
   );
 }
