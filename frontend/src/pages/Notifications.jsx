@@ -101,14 +101,6 @@ export default function Notifications() {
           )}
         </div>
       </div>
-
-      <style>{`
-        .notifications-page {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }

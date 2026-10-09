@@ -1,14 +1,3 @@
-/**
- * NISHPaksh AI - Forensic Color Calibration & Image Analysis Module
- * 
- * Complies with strict forensic standards:
- * 1. Processes reference card independently as an optical calibration baseline.
- * 2. Samples real RGB chromatic values from canvas pixels.
- * 3. Does NOT fabricate or invent synthetic AI confidence scores.
- * 4. Normalizes evidence samples against standard chemical reagent colorimetric charts.
- */
-
-// Known standard reagent reaction color ranges based on UNODC / NCB Field Testing Guidelines
 export const REAGENT_BENCHMARKS = {
   Marquis: [
     { target: 'Opiates (Morphine/Heroin)', expectedHex: '#4A154B', name: 'Deep Purple / Violet' },
@@ -29,16 +18,13 @@ export const REAGENT_BENCHMARKS = {
   ]
 };
 
-/**
- * Extract pixel buffer from data URL or image
- */
 export function getImagePixelData(imageSrc) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 320; // sample size for rapid real-time analysis
+      const maxDim = 320;
       const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
@@ -59,14 +45,10 @@ export function getImagePixelData(imageSrc) {
   });
 }
 
-/**
- * Process Color Calibration Reference Card independently
- */
 export async function calibrateReferenceCard(cardDataUrl) {
   try {
     const { width, height, data } = await getImagePixelData(cardDataUrl);
     
-    // Sample the center 50% region of the calibration card
     let sumR = 0;
     let sumG = 0;
     let sumB = 0;
@@ -92,8 +74,7 @@ export async function calibrateReferenceCard(cardDataUrl) {
     const meanB = Math.round(sumB / count);
     const luminance = Math.round(0.299 * meanR + 0.587 * meanG + 0.114 * meanB);
 
-    // Calculate neutral channel normalization ratios
-    const targetLuma = 220; // Standard calibrated reference target reflectance
+    const targetLuma = 220;
     const normFactor = luminance > 0 ? (targetLuma / luminance) : 1;
 
     let lightingQuality = 'Optimal Daylight';
@@ -125,14 +106,10 @@ export async function calibrateReferenceCard(cardDataUrl) {
   }
 }
 
-/**
- * Process Sample Reaction Frame
- */
 export async function analyzeSampleReaction(sampleDataUrl, reagentName, calibrationProfile = null) {
   try {
     const { width, height, data } = await getImagePixelData(sampleDataUrl);
 
-    // Sample reaction epicenter (center 40% of the viewport)
     let sumR = 0;
     let sumG = 0;
     let sumB = 0;
@@ -157,7 +134,6 @@ export async function analyzeSampleReaction(sampleDataUrl, reagentName, calibrat
     let g = Math.round(sumG / count);
     let b = Math.round(sumB / count);
 
-    // Apply reference card normalization if available
     if (calibrationProfile && calibrationProfile.channelStats && calibrationProfile.channelStats.normalizationFactor) {
       const f = calibrationProfile.channelStats.normalizationFactor;
       r = Math.min(255, Math.round(r * f));
@@ -167,7 +143,6 @@ export async function analyzeSampleReaction(sampleDataUrl, reagentName, calibrat
 
     const hexColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
 
-    // Compare with reagent benchmarks
     const benchmarks = REAGENT_BENCHMARKS[reagentName] || [];
     let matchedBenchmark = benchmarks[0] || { target: 'General Chemical Reaction', name: 'Observed Hue' };
 

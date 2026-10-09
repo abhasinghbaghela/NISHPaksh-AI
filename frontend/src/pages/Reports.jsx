@@ -104,14 +104,6 @@ Compliance:       NDPS Act Section 52A Verified
           </table>
         </div>
       </div>
-
-      <style>{`
-        .reports-page {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }

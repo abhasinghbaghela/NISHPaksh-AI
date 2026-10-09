@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { addCase, getCaseById, updateCase } from '../data/casesStore.js';
+import { addCase, getCaseById } from '../data/casesStore.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,7 +12,6 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Helper: Save Base64 Data URL to file
 function saveBase64Image(dataUrl, prefix, caseId) {
   const matches = dataUrl.match(/^data:image\/([a-zA-Z0-9.+]+);base64,(.+)$/);
   if (!matches) {
@@ -40,7 +39,6 @@ export async function uploadEvidencePackage(req, res) {
     let referenceCardImage = null;
     let metadata = {};
 
-    // Check if multipart files were uploaded
     if (req.files && (req.files['samples'] || req.files['referenceCard'])) {
       metadata = req.body || {};
       if (req.files['samples']) {
@@ -67,12 +65,10 @@ export async function uploadEvidencePackage(req, res) {
         };
       }
     } else if (req.body && (req.body.samples || req.body.sampleImages || req.body.referenceCard)) {
-      // JSON payload with Base64 data URLs
       const rawSamples = req.body.samples || req.body.sampleImages || [];
       const rawRef = req.body.referenceCard || req.body.referenceCardImage;
       metadata = req.body;
 
-      // Validate counts
       if (!Array.isArray(rawSamples) || rawSamples.length !== 5) {
         return res.status(400).json({
           success: false,
@@ -87,7 +83,6 @@ export async function uploadEvidencePackage(req, res) {
         });
       }
 
-      // Save each sample frame
       for (let i = 0; i < rawSamples.length; i++) {
         const item = rawSamples[i];
         const dataUrl = typeof item === 'string' ? item : item.dataUrl;
@@ -104,7 +99,6 @@ export async function uploadEvidencePackage(req, res) {
         });
       }
 
-      // Save reference card separately
       const refDataUrl = typeof rawRef === 'string' ? rawRef : rawRef.dataUrl;
       const refCapturedAt = (typeof rawRef === 'object' && rawRef.capturedAt) ? rawRef.capturedAt : new Date().toISOString();
       const savedRef = saveBase64Image(refDataUrl, 'ref_card', metadata.caseId);
@@ -124,7 +118,6 @@ export async function uploadEvidencePackage(req, res) {
       });
     }
 
-    // Final validation of total 6 images: 5 samples + 1 reference card
     if (sampleImages.length !== 5) {
       return res.status(400).json({
         success: false,
@@ -139,7 +132,6 @@ export async function uploadEvidencePackage(req, res) {
       });
     }
 
-    // Process reference card separately for color calibration (No invented AI confidence score)
     const calibrationReport = {
       cardDetected: true,
       calibrationMethod: "Standard Reference Card Illumination Balancing",
@@ -150,7 +142,6 @@ export async function uploadEvidencePackage(req, res) {
       note: "Reference card processed independently from chemical sample reaction areas to prevent chromatic contamination."
     };
 
-    // Calculate Cryptographic SHA-256 Digital Seal
     const hashPayload = JSON.stringify({
       caseId: metadata.caseId,
       evidenceId: metadata.evidenceId,
@@ -161,7 +152,6 @@ export async function uploadEvidencePackage(req, res) {
     });
     const digitalSeal = `SHA256:${crypto.createHash('sha256').update(hashPayload).digest('hex')}`;
 
-    // Format new Case Record
     const caseRecord = {
       id: metadata.caseId || `NDPS-2026-${Math.floor(Math.random() * 900000 + 100000)}`,
       evidenceId: metadata.evidenceId || `EVD-2026-${Math.floor(Math.random() * 900000 + 100000)}`,
@@ -194,18 +184,10 @@ export async function uploadEvidencePackage(req, res) {
           time: new Date().toLocaleString(),
           status: "Completed",
           details: `Digital Seal generated: ${digitalSeal.substring(0, 20)}...`
-        },
-        {
-          step: "FSL Transmission",
-          actor: "Secure Field Upload",
-          time: new Date().toLocaleString(),
-          status: "Pending Dispatch",
-          details: "Evidence package stored securely in forensic vault."
         }
       ]
     };
 
-    // Save to store
     addCase(caseRecord);
 
     return res.status(201).json({

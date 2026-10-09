@@ -97,21 +97,6 @@ export default function SyncStatus() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .sync-page {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-        .spinner {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

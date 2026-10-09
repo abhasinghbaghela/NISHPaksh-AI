@@ -21,7 +21,6 @@ export default function EvidenceCapture({
   onSamplesChange,
   onReferenceCardChange
 }) {
-  // Capture mode: 'sample' (1-5) or 'reference' (1)
   const [activeMode, setActiveMode] = useState('sample');
   const [stream, setStream] = useState(null);
   const [cameraError, setCameraError] = useState(null);
@@ -40,7 +39,6 @@ export default function EvidenceCapture({
     setCameraError(null);
     setCameraReady(false);
 
-    // Stop existing stream if any
     if (stream) {
       stream.getTracks().forEach(t => t.stop());
     }
@@ -92,12 +90,10 @@ export default function EvidenceCapture({
     };
   }, [facingMode]);
 
-  // Flip Camera (Front / Rear)
   const toggleFacingMode = () => {
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
-  // Toggle Torch/Flash if supported
   const toggleTorch = async () => {
     if (!stream) return;
     const track = stream.getVideoTracks()[0];
@@ -111,7 +107,6 @@ export default function EvidenceCapture({
         console.warn('Torch constraint error:', e);
       }
     } else {
-      // Software flash effect
       setTorchOn(!torchOn);
     }
   };
@@ -143,13 +138,11 @@ export default function EvidenceCapture({
           }];
           onSamplesChange(newSamples);
 
-          // Auto-prompt to reference card if 5 samples are completed
           if (newSamples.length === 5 && !referenceCard) {
             setActiveMode('reference');
           }
         }
       } else {
-        // Reference Card
         onReferenceCardChange({
           id: 'ref-card',
           dataUrl,
@@ -161,7 +154,6 @@ export default function EvidenceCapture({
     }, 250);
   };
 
-  // Fallback / Upload / Simulated Capture for devices without webcam
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -197,7 +189,7 @@ export default function EvidenceCapture({
     e.target.value = '';
   };
 
-  // Generate a high quality synthetic test card for headless/testing environments
+  // Generate synthetic test frame for environments without a webcam
   const generateSimulatedTestCard = () => {
     const canvas = document.createElement('canvas');
     canvas.width = 640;
@@ -205,16 +197,13 @@ export default function EvidenceCapture({
     const ctx = canvas.getContext('2d');
 
     if (activeMode === 'sample') {
-      // Chemical reagent test swatch simulation
       const colors = ['#4A154B', '#1B4D3E', '#0047AB', '#DE8A0C', '#800020'];
       const currentIdx = sampleImages.length;
       const reactionColor = colors[currentIdx % colors.length];
 
-      // Background test vial
       ctx.fillStyle = '#F1F5F9';
       ctx.fillRect(0, 0, 640, 480);
 
-      // Reagent reaction well
       ctx.beginPath();
       ctx.arc(320, 240, 140, 0, Math.PI * 2);
       ctx.fillStyle = reactionColor;
@@ -223,7 +212,6 @@ export default function EvidenceCapture({
       ctx.lineWidth = 6;
       ctx.stroke();
 
-      // Forensic text label
       ctx.fillStyle = '#0F172A';
       ctx.font = 'bold 20px Inter, sans-serif';
       ctx.textAlign = 'center';
@@ -232,11 +220,9 @@ export default function EvidenceCapture({
       ctx.fillText(`Timestamp: ${new Date().toLocaleString()} | ID: EVD-${Date.now().toString().slice(-6)}`, 320, 90);
       ctx.fillText('Reagent Chemical Reaction Spot Test', 320, 430);
     } else {
-      // Color Calibration Target Card
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, 640, 480);
 
-      // Standard forensic color patches (Macbeth-style reference target)
       const patches = [
         '#735244', '#C29682', '#627A9D', '#576C43', '#8580B1', '#67BDAB',
         '#D96831', '#49549F', '#C15A63', '#5E3C6C', '#9DBC40', '#E0A32E',
@@ -295,7 +281,6 @@ export default function EvidenceCapture({
     }
   };
 
-  // Delete individual sample
   const deleteSample = (index) => {
     const updated = sampleImages.filter((_, i) => i !== index).map((s, idx) => ({
       ...s,
@@ -305,12 +290,10 @@ export default function EvidenceCapture({
     onSamplesChange(updated);
   };
 
-  // Delete reference card
   const deleteReferenceCard = () => {
     onReferenceCardChange(null);
   };
 
-  // Retake all samples
   const resetSamples = () => {
     onSamplesChange([]);
   };
@@ -332,7 +315,6 @@ export default function EvidenceCapture({
         onChange={handleFileUpload}
       />
 
-      {/* Header */}
       <div className="capture-header">
         <div className="capture-heading">
           <div className="capture-icon">
@@ -349,7 +331,6 @@ export default function EvidenceCapture({
         </div>
       </div>
 
-      {/* Target Selector Tabs */}
       <div className="capture-mode-selector">
         <button
           type="button"
@@ -372,9 +353,7 @@ export default function EvidenceCapture({
         </button>
       </div>
 
-      {/* Layout: Camera Viewport + Quality Checks */}
       <div className="capture-layout">
-        {/* Left Column: Camera Viewport */}
         <section className="camera-card">
           <div className="section-heading">
             <div>
@@ -394,7 +373,6 @@ export default function EvidenceCapture({
             </span>
           </div>
 
-          {/* Viewport Box */}
           <div className={`camera-viewport ${torchOn ? 'flash-active' : ''}`}>
             {cameraError ? (
               <div className="camera-error-banner">
@@ -416,7 +394,6 @@ export default function EvidenceCapture({
                     type="button"
                     className="btn-secondary"
                     onClick={generateSimulatedTestCard}
-                    title="Simulate forensic capture for testing"
                   >
                     <Zap size={14} /> Simulate Test Frame
                   </button>
@@ -432,16 +409,13 @@ export default function EvidenceCapture({
                   className="camera-video-element"
                 />
 
-                {/* Shutter flash effect */}
                 {isCapturing && <div className="shutter-flash" />}
 
-                {/* Alignment Brackets */}
                 <div className="corner corner-top-left" />
                 <div className="corner corner-top-right" />
                 <div className="corner corner-bottom-left" />
                 <div className="corner corner-bottom-right" />
 
-                {/* Target Overlay */}
                 <div className="camera-center-guide">
                   {activeMode === 'sample' ? (
                     <div className="guide-box sample-guide">
@@ -456,13 +430,11 @@ export default function EvidenceCapture({
                   )}
                 </div>
 
-                {/* Camera Status Badge */}
                 <div className="camera-status-pill">
                   <span className="live-dot" />
                   <span>{cameraReady ? 'LIVE' : 'INITIALIZING'}</span>
                 </div>
 
-                {/* Top Control Overlay */}
                 <div className="camera-top-tools">
                   <button
                     type="button"
@@ -485,14 +457,12 @@ export default function EvidenceCapture({
             )}
           </div>
 
-          {/* Camera Controls Toolbar */}
           <div className="camera-controls">
             <button
               type="button"
               className="secondary-control"
               onClick={activeMode === 'sample' ? resetSamples : deleteReferenceCard}
               disabled={activeMode === 'sample' ? sampleImages.length === 0 : !referenceCard}
-              title={activeMode === 'sample' ? 'Retake All Samples' : 'Retake Reference Card'}
             >
               <RotateCcw size={16} />
               <span>Retake</span>
@@ -526,25 +496,21 @@ export default function EvidenceCapture({
               type="button"
               className="secondary-control"
               onClick={() => fileInputRef.current?.click()}
-              title="Upload file from device"
             >
               <Upload size={16} />
               <span>Upload</span>
             </button>
 
-            {/* Test button for rapid verification */}
             <button
               type="button"
               className="secondary-control test-btn"
               onClick={generateSimulatedTestCard}
-              title="Generate forensic test sample frame"
             >
               <Zap size={16} />
               <span>Test Frame</span>
             </button>
           </div>
 
-          {/* Overall Progress Bar */}
           <div className="capture-progress">
             <div className="progress-header">
               <span>Overall Capture Progress (5 Samples + 1 Ref Card)</span>
@@ -559,7 +525,6 @@ export default function EvidenceCapture({
           </div>
         </section>
 
-        {/* Right Column: Forensic Quality & Calibration Info */}
         <aside className="quality-card">
           <div className="section-heading">
             <div>
@@ -635,7 +600,6 @@ export default function EvidenceCapture({
         </aside>
       </div>
 
-      {/* Thumbnails Section: Clearly Distinguishing Samples vs Reference Card */}
       <section className="frames-card">
         <div className="section-heading frames-heading">
           <div>
@@ -649,7 +613,6 @@ export default function EvidenceCapture({
           </span>
         </div>
 
-        {/* 1. Evidence Sample Frames (5 Slots) */}
         <div className="gallery-section-title">
           <span>Part A: Evidence Sample Images (Exactly 5 Required)</span>
           <span className="badge blue">{sampleImages.length} of 5</span>
@@ -697,9 +660,7 @@ export default function EvidenceCapture({
                 ) : (
                   <div
                     className="empty-slot"
-                    onClick={() => {
-                      setActiveMode('sample');
-                    }}
+                    onClick={() => setActiveMode('sample')}
                   >
                     <div className="empty-icon">
                       <Camera size={20} />
@@ -713,7 +674,6 @@ export default function EvidenceCapture({
           })}
         </div>
 
-        {/* 2. Calibration Reference Card (1 Dedicated Slot) */}
         <div className="gallery-section-title ref-title">
           <span>Part B: Optical Color Calibration Card (1 Required Separately)</span>
           <span className={`badge ${refCardComplete ? 'success' : 'warning'}`}>
@@ -787,7 +747,6 @@ export default function EvidenceCapture({
         </div>
       </section>
 
-      {/* Image Preview Modal */}
       {previewModalImg && (
         <div className="modal-backdrop" onClick={() => setPreviewModalImg(null)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
@@ -811,829 +770,6 @@ export default function EvidenceCapture({
           </div>
         </div>
       )}
-
-      {/* Evidence Capture Scoped Styles */}
-      <style>{`
-        .capture-container {
-          width: 100%;
-          box-sizing: border-box;
-          padding: 24px;
-          color: var(--slate-900);
-        }
-
-        .capture-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 20px;
-          margin-bottom: 20px;
-        }
-
-        .capture-heading {
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-        }
-
-        .capture-icon {
-          width: 44px;
-          height: 44px;
-          flex-shrink: 0;
-          border-radius: var(--radius-md);
-          background: var(--primary-light);
-          color: var(--primary-navy);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .capture-heading h3 {
-          font-size: 20px;
-          font-weight: 800;
-          color: var(--slate-900);
-          margin-bottom: 4px;
-        }
-
-        .capture-heading p {
-          font-size: 13px;
-          color: var(--slate-500);
-        }
-
-        .capture-status {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: var(--primary-light);
-          color: var(--primary-navy);
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        /* Mode Tabs */
-        .capture-mode-selector {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-
-        .mode-tab {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 12px 18px;
-          background: var(--white);
-          border: 2px solid var(--slate-200);
-          border-radius: var(--radius-md);
-          font-weight: 700;
-          font-size: 13px;
-          color: var(--slate-600);
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .mode-tab:hover {
-          border-color: var(--primary-navy);
-          color: var(--primary-navy);
-        }
-
-        .mode-tab.active {
-          background: var(--primary-light);
-          border-color: var(--primary-navy);
-          color: var(--primary-navy);
-          box-shadow: 0 2px 6px rgba(11, 60, 140, 0.12);
-        }
-
-        .mode-tab.reference-tab.active {
-          background: #FEF3C7;
-          border-color: #D97706;
-          color: #92400E;
-        }
-
-        .tab-check-icon {
-          color: var(--success-green);
-          margin-left: 4px;
-        }
-
-        /* Layout Grid */
-        .capture-layout {
-          display: grid;
-          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-          gap: 24px;
-          margin-bottom: 24px;
-        }
-
-        .camera-card {
-          background: var(--white);
-          border: 1px solid var(--slate-200);
-          border-radius: var(--radius-lg);
-          padding: 20px;
-          box-shadow: var(--shadow-sm);
-        }
-
-        .section-heading {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 16px;
-        }
-
-        .section-heading h4 {
-          font-size: 15px;
-          font-weight: 700;
-          color: var(--slate-900);
-        }
-
-        .section-heading p {
-          font-size: 12px;
-          color: var(--slate-500);
-          margin-top: 2px;
-        }
-
-        .frame-counter {
-          font-size: 12px;
-          font-weight: 700;
-          background: var(--slate-100);
-          color: var(--slate-700);
-          padding: 4px 10px;
-          border-radius: 999px;
-        }
-
-        /* Camera Viewport */
-        .camera-viewport {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 16 / 10;
-          background: #0F172A;
-          border-radius: var(--radius-md);
-          overflow: hidden;
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .camera-viewport.flash-active {
-          filter: brightness(1.25) contrast(1.1);
-        }
-
-        .camera-frame {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .camera-video-element {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .shutter-flash {
-          position: absolute;
-          inset: 0;
-          background: white;
-          opacity: 0.85;
-          pointer-events: none;
-          animation: flash-fade 0.25s ease-out;
-        }
-
-        @keyframes flash-fade {
-          from { opacity: 0.85; }
-          to { opacity: 0; }
-        }
-
-        /* Viewport Corners */
-        .corner {
-          position: absolute;
-          width: 24px;
-          height: 24px;
-          border-color: #38BDF8;
-          border-style: solid;
-          pointer-events: none;
-        }
-
-        .corner-top-left {
-          top: 16px;
-          left: 16px;
-          border-width: 3px 0 0 3px;
-        }
-
-        .corner-top-right {
-          top: 16px;
-          right: 16px;
-          border-width: 3px 3px 0 0;
-        }
-
-        .corner-bottom-left {
-          bottom: 16px;
-          left: 16px;
-          border-width: 0 0 3px 3px;
-        }
-
-        .corner-bottom-right {
-          bottom: 16px;
-          right: 16px;
-          border-width: 0 3px 3px 0;
-        }
-
-        .camera-center-guide {
-          position: absolute;
-          pointer-events: none;
-        }
-
-        .guide-box {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          padding: 10px 16px;
-          border-radius: var(--radius-md);
-          color: white;
-          font-size: 12px;
-          font-weight: 600;
-          background: rgba(15, 23, 42, 0.65);
-          backdrop-filter: blur(4px);
-          border: 1px dashed rgba(255, 255, 255, 0.4);
-        }
-
-        .guide-box.reference-guide {
-          border-color: #F59E0B;
-          color: #FDE68A;
-        }
-
-        .camera-status-pill {
-          position: absolute;
-          bottom: 14px;
-          left: 16px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(15, 23, 42, 0.7);
-          padding: 4px 10px;
-          border-radius: 999px;
-          color: white;
-          font-size: 11px;
-          font-weight: 700;
-        }
-
-        .live-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #22C55E;
-          box-shadow: 0 0 8px #22C55E;
-        }
-
-        .camera-top-tools {
-          position: absolute;
-          top: 14px;
-          right: 16px;
-          display: flex;
-          gap: 8px;
-        }
-
-        .tool-btn {
-          width: 34px;
-          height: 34px;
-          border-radius: var(--radius-md);
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-
-        .tool-btn.active {
-          background: #F59E0B;
-          color: black;
-        }
-
-        /* Error Banner */
-        .camera-error-banner {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          padding: 24px;
-          color: white;
-          max-width: 480px;
-        }
-
-        .error-title {
-          font-size: 16px;
-          font-weight: 700;
-          margin: 10px 0 6px;
-        }
-
-        .error-desc {
-          font-size: 12px;
-          color: #CBD5E1;
-          margin-bottom: 16px;
-          line-height: 1.5;
-        }
-
-        .error-actions {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 10px;
-        }
-
-        /* Controls */
-        .camera-controls {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          margin-bottom: 16px;
-        }
-
-        .secondary-control {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 10px 16px;
-          background: var(--white);
-          border: 1px solid var(--slate-300);
-          color: var(--slate-700);
-          border-radius: var(--radius-md);
-          font-size: 13px;
-          font-weight: 600;
-        }
-
-        .secondary-control:hover:not(:disabled) {
-          background: var(--slate-100);
-        }
-
-        .secondary-control.test-btn {
-          background: var(--primary-light);
-          color: var(--primary-navy);
-          border-color: #BFDBFE;
-        }
-
-        .capture-button {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px 26px;
-          background: var(--primary-navy);
-          color: white;
-          border: none;
-          border-radius: var(--radius-md);
-          font-size: 14px;
-          font-weight: 700;
-          box-shadow: 0 4px 10px rgba(11, 60, 140, 0.25);
-        }
-
-        .capture-button:hover:not(:disabled) {
-          background: var(--primary-dark);
-        }
-
-        .capture-button.completed {
-          background: var(--success-green);
-        }
-
-        /* Progress Bar */
-        .capture-progress {
-          background: var(--slate-50);
-          border: 1px solid var(--slate-200);
-          border-radius: var(--radius-md);
-          padding: 12px;
-        }
-
-        .progress-header {
-          display: flex;
-          justify-content: space-between;
-          font-size: 12px;
-          color: var(--slate-600);
-          margin-bottom: 6px;
-        }
-
-        .progress-track {
-          height: 8px;
-          background: var(--slate-200);
-          border-radius: 999px;
-          overflow: hidden;
-        }
-
-        .progress-fill {
-          height: 100%;
-          background: var(--primary-navy);
-          border-radius: 999px;
-          transition: width 0.3s ease;
-        }
-
-        /* Quality Card */
-        .quality-card {
-          background: var(--white);
-          border: 1px solid var(--slate-200);
-          border-radius: var(--radius-lg);
-          padding: 20px;
-          box-shadow: var(--shadow-sm);
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .quality-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .quality-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 10px 12px;
-          background: var(--slate-50);
-          border: 1px solid var(--slate-200);
-          border-radius: var(--radius-md);
-        }
-
-        .quality-item-left {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .quality-icon.good {
-          color: var(--success-green);
-        }
-
-        .quality-item span {
-          display: block;
-          font-size: 12px;
-          font-weight: 700;
-          color: var(--slate-800);
-        }
-
-        .quality-item small {
-          display: block;
-          font-size: 11px;
-          color: var(--slate-500);
-        }
-
-        .quality-item strong {
-          font-size: 12px;
-          color: var(--slate-700);
-        }
-
-        .quality-note {
-          display: flex;
-          gap: 10px;
-          background: var(--info-bg);
-          border: 1px solid #BFDBFE;
-          border-radius: var(--radius-md);
-          padding: 12px;
-          font-size: 11px;
-          color: #1E40AF;
-          line-height: 1.45;
-        }
-
-        /* Frames Card */
-        .frames-card {
-          background: var(--white);
-          border: 1px solid var(--slate-200);
-          border-radius: var(--radius-lg);
-          padding: 20px;
-          box-shadow: var(--shadow-sm);
-        }
-
-        .frames-heading {
-          margin-bottom: 20px;
-        }
-
-        .frames-required {
-          font-size: 12px;
-          font-weight: 700;
-          color: var(--warning-amber);
-          background: var(--warning-bg);
-          padding: 4px 10px;
-          border-radius: 999px;
-        }
-
-        .frames-required.all-done {
-          color: var(--success-green);
-          background: var(--success-bg);
-        }
-
-        .gallery-section-title {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 13px;
-          font-weight: 700;
-          color: var(--slate-800);
-          margin: 16px 0 12px;
-          padding-bottom: 6px;
-          border-bottom: 1px solid var(--slate-200);
-        }
-
-        .gallery-section-title.ref-title {
-          margin-top: 24px;
-        }
-
-        .frames-grid {
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 12px;
-        }
-
-        .evidence-frame {
-          aspect-ratio: 4 / 3;
-          border-radius: var(--radius-md);
-          overflow: hidden;
-          background: var(--slate-100);
-          border: 1px dashed var(--slate-300);
-          position: relative;
-        }
-
-        .evidence-frame.captured {
-          border: 2px solid var(--primary-navy);
-        }
-
-        .thumbnail-wrapper {
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-
-        .thumb-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .frame-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(15, 23, 42, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        .thumbnail-wrapper:hover .frame-overlay {
-          opacity: 1;
-        }
-
-        .thumb-action-btn {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: white;
-          color: var(--slate-800);
-          border: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-
-        .thumb-action-btn.delete {
-          color: var(--danger-red);
-        }
-
-        .frame-badge {
-          position: absolute;
-          bottom: 4px;
-          left: 4px;
-          background: rgba(15, 23, 42, 0.75);
-          color: white;
-          font-size: 10px;
-          font-weight: 700;
-          padding: 2px 6px;
-          border-radius: 4px;
-        }
-
-        .empty-slot {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          color: var(--slate-400);
-          cursor: pointer;
-          transition: background 0.15s ease;
-        }
-
-        .empty-slot:hover {
-          background: var(--slate-200);
-          color: var(--primary-navy);
-        }
-
-        .empty-slot span {
-          font-size: 11px;
-          font-weight: 600;
-        }
-
-        .empty-slot small {
-          font-size: 10px;
-          color: var(--slate-400);
-        }
-
-        /* Reference Card Dedicated Slot */
-        .reference-card-container {
-          margin-top: 10px;
-        }
-
-        .reference-card-slot {
-          border-radius: var(--radius-md);
-          background: #FFFBEB;
-          border: 2px dashed #F59E0B;
-          padding: 16px;
-          transition: all 0.2s ease;
-        }
-
-        .reference-card-slot.captured {
-          background: var(--white);
-          border: 2px solid #D97706;
-          box-shadow: 0 4px 12px rgba(217, 119, 6, 0.1);
-        }
-
-        .ref-thumbnail-wrapper {
-          display: flex;
-          gap: 20px;
-          align-items: center;
-        }
-
-        .ref-thumb-img {
-          width: 180px;
-          height: 130px;
-          object-fit: cover;
-          border-radius: var(--radius-md);
-          border: 2px solid #F59E0B;
-        }
-
-        .ref-details {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .ref-header-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .ref-tag {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #B45309;
-          font-size: 14px;
-        }
-
-        .ref-text {
-          font-size: 12px;
-          color: var(--slate-600);
-          line-height: 1.5;
-        }
-
-        .ref-actions {
-          display: flex;
-          gap: 10px;
-        }
-
-        .ref-empty-slot {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          cursor: pointer;
-        }
-
-        .ref-icon-circle {
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #FEF3C7;
-          color: #D97706;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .ref-empty-text {
-          flex: 1;
-        }
-
-        .ref-empty-text strong {
-          font-size: 14px;
-          color: #92400E;
-          display: block;
-        }
-
-        .ref-empty-text p {
-          font-size: 12px;
-          color: #B45309;
-          margin-top: 2px;
-        }
-
-        /* Modal */
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(15, 23, 42, 0.75);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          padding: 20px;
-        }
-
-        .modal-card {
-          background: white;
-          border-radius: var(--radius-lg);
-          max-width: 800px;
-          width: 100%;
-          overflow: hidden;
-          box-shadow: var(--shadow-lg);
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px 20px;
-          border-bottom: 1px solid var(--slate-200);
-        }
-
-        .modal-header h5 {
-          font-size: 16px;
-          font-weight: 700;
-          color: var(--slate-900);
-        }
-
-        .modal-close-btn {
-          background: none;
-          border: none;
-          color: var(--slate-500);
-          cursor: pointer;
-        }
-
-        .modal-body {
-          padding: 20px;
-          display: flex;
-          justify-content: center;
-          background: #0F172A;
-        }
-
-        .modal-image {
-          max-height: 70vh;
-          width: auto;
-          object-fit: contain;
-          border-radius: var(--radius-md);
-        }
-
-        @media (max-width: 900px) {
-          .capture-layout {
-            grid-template-columns: 1fr;
-          }
-          .frames-grid {
-            grid-template-columns: repeat(3, 1fr);
-          }
-          .ref-thumbnail-wrapper {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          .ref-thumb-img {
-            width: 100%;
-            height: 180px;
-          }
-          .ref-empty-slot {
-            flex-direction: column;
-            text-align: center;
-          }
-        }
-
-        @media (max-width: 600px) {
-          .frames-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          .capture-mode-selector {
-            flex-direction: column;
-          }
-        }
-      `}</style>
     </div>
   );
 }

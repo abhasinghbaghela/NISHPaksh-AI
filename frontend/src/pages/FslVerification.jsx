@@ -88,14 +88,6 @@ export default function FslVerification() {
           </table>
         </div>
       </div>
-
-      <style>{`
-        .fsl-container {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }

@@ -10,7 +10,6 @@ console.log('=====================================================');
 console.log('   NISHPaksh AI - Fullstack Development Runner       ');
 console.log('=====================================================');
 
-// Launch Backend
 console.log('[System] Launching Backend Server on port 5000...');
 const backendProc = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['run', 'dev'], {
   cwd: path.join(rootDir, 'backend'),
@@ -18,7 +17,6 @@ const backendProc = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['r
   shell: true
 });
 
-// Launch Frontend
 console.log('[System] Launching Frontend Vite Dev Server on port 5173...');
 const frontendProc = spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ['run', 'dev'], {
   cwd: path.join(rootDir, 'frontend'),

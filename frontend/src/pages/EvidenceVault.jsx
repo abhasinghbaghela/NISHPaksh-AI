@@ -112,14 +112,6 @@ export default function EvidenceVault() {
           </table>
         </div>
       </div>
-
-      <style>{`
-        .vault-container {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }

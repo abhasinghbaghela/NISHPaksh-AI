@@ -110,14 +110,6 @@ export default function Analytics() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .analytics-container {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }

@@ -71,14 +71,6 @@ export default function HelpSop() {
           </div>
         ))}
       </div>
-
-      <style>{`
-        .help-page {
-          padding: 28px;
-          max-width: var(--content-max-width);
-          margin: 0 auto;
-        }
-      `}</style>
     </div>
   );
 }
