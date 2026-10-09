@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production build outputs
+dist/
+build/
+*/dist/
+
+# Local Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Evidence Uploads (keep directory via .gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
