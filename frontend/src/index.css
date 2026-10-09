@@ -422,6 +422,27 @@ a {
   color: var(--slate-500);
 }
 
+.header-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--danger-bg);
+  border: 1px solid #FECACA;
+  color: var(--danger-red);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 6px;
+}
+
+.header-logout-btn:hover {
+  background: #FEE2E2;
+  border-color: #F87171;
+}
+
 /* Sidebar Styles */
 .sidebar {
   width: var(--sidebar-width);
@@ -503,6 +524,28 @@ a {
   padding: 16px;
   border-top: 1px solid var(--slate-200);
   background: var(--slate-50);
+}
+
+.sidebar-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--danger-bg);
+  border: 1px solid #FECACA;
+  color: var(--danger-red);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-logout-btn:hover {
+  background: #FEE2E2;
+  border-color: #F87171;
 }
 
 .branding-grid {

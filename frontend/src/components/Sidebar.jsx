@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -12,8 +12,10 @@ import {
   RefreshCw,
   Bell,
   HelpCircle,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -31,6 +33,15 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ onItemClick }) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    if (onItemClick) onItemClick();
+    navigate('/login');
+  };
+
   return (
     <aside className="sidebar">
       <nav className="nav-list custom-scrollbar">
@@ -53,6 +64,16 @@ export default function Sidebar({ onItemClick }) {
       </nav>
 
       <div className="sidebar-footer">
+        <button
+          type="button"
+          className="sidebar-logout-btn"
+          onClick={handleLogout}
+          title="Sign Out / Lock Session"
+        >
+          <LogOut size={16} />
+          <span>Sign Out / Lock Session</span>
+        </button>
+
         <div className="branding-grid">
           <div className="govt-seal-text">
             <strong>Narcotics Control Bureau</strong>

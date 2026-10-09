@@ -1,10 +1,16 @@
 import React from 'react';
-import { Menu, Bell, Shield, User, ChevronDown } from 'lucide-react';
+import { Menu, Bell, Shield, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Header({ onMenuClick, isOnline = true }) {
-  const { user, switchRole, roles } = useAuth();
+  const { user, switchRole, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="header">
@@ -80,6 +86,17 @@ export default function Header({ onMenuClick, isOnline = true }) {
             <option value="COURT">Special Judge (NDPS)</option>
           </select>
         </div>
+
+        <button
+          type="button"
+          className="header-logout-btn"
+          onClick={handleLogout}
+          title="Sign Out / Lock Session"
+          aria-label="Log Out"
+        >
+          <LogOut size={16} />
+          <span className="hide-mobile">Log Out</span>
+        </button>
       </div>
     </header>
   );
