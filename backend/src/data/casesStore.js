@@ -1,11 +1,18 @@
+import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_FILE = path.join(__dirname, 'cases.json');
 
 const makeSampleSvg = (label, color) => `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="%23F1F5F9"/><circle cx="160" cy="120" r="55" fill="${encodeURIComponent(color)}" stroke="%230B3C8C" stroke-width="4"/><text x="160" y="30" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="%230F172A">${encodeURIComponent(label)}</text><text x="160" y="215" font-family="sans-serif" font-size="10" text-anchor="middle" fill="%2364748B">NDPS Section 52A Sealed Evidence</text></svg>`;
 
 const makeRefCardSvg = () => `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="%23FFFFFF"/><rect x="20" y="20" width="40" height="35" fill="%23735244"/><rect x="70" y="20" width="40" height="35" fill="%23C29682"/><rect x="120" y="20" width="40" height="35" fill="%23627A9D"/><rect x="170" y="20" width="40" height="35" fill="%23576C43"/><rect x="220" y="20" width="40" height="35" fill="%238580B1"/><rect x="270" y="20" width="35" height="35" fill="%2367BDAB"/><rect x="20" y="65" width="40" height="35" fill="%23D96831"/><rect x="70" y="65" width="40" height="35" fill="%2349549F"/><rect x="120" y="65" width="40" height="35" fill="%23C15A63"/><rect x="170" y="65" width="40" height="35" fill="%235E3C6C"/><rect x="220" y="65" width="40" height="35" fill="%239DBC40"/><rect x="270" y="65" width="35" height="35" fill="%23E0A32E"/><text x="160" y="145" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="%230B3C8C">COLOR REFERENCE TARGET CR-1</text><text x="160" y="165" font-family="sans-serif" font-size="10" text-anchor="middle" fill="%23D97706">Standard Reference Channel Baseline</text></svg>`;
 
-// In-memory case store seeded with initial reference cases
-export const cases = [
+// Default reference seed cases
+const DEFAULT_CASES = [
   {
     id: "NDPS-2026-001234",
     evidenceId: "EVD-2026-881294",
@@ -111,12 +118,50 @@ export const cases = [
   }
 ];
 
+function loadPersistedCases() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const content = fs.readFileSync(DATA_FILE, 'utf8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not read cases.json, initializing with default cases:', err.message);
+  }
+
+  // If file doesn't exist or is invalid, persist defaults
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_CASES, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Could not initialize cases.json:', err.message);
+  }
+
+  return [...DEFAULT_CASES];
+}
+
+function persistCasesToDisk(casesList) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(casesList, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to write cases to disk:', err.message);
+  }
+}
+
+// Initialized cases store
+export const cases = loadPersistedCases();
+
 export function getAllCases() {
   return cases;
 }
 
 export function getCaseById(id) {
-  return cases.find(c => c.id.toLowerCase() === id.toLowerCase() || c.evidenceId.toLowerCase() === id.toLowerCase());
+  if (!id) return null;
+  return cases.find(
+    c => (c.id && c.id.toLowerCase() === id.toLowerCase()) ||
+         (c.evidenceId && c.evidenceId.toLowerCase() === id.toLowerCase())
+  );
 }
 
 export function addCase(caseData) {
@@ -136,8 +181,9 @@ export function addCase(caseData) {
     caseData.digitalSeal = `SHA256:${hash}`;
   }
 
-  // Prepend to cases list
+  // Prepend to cases list and persist permanently to disk
   cases.unshift(caseData);
+  persistCasesToDisk(cases);
   return caseData;
 }
 
@@ -145,5 +191,6 @@ export function updateCase(id, updateData) {
   const index = cases.findIndex(c => c.id.toLowerCase() === id.toLowerCase());
   if (index === -1) return null;
   cases[index] = { ...cases[index], ...updateData };
+  persistCasesToDisk(cases);
   return cases[index];
 }

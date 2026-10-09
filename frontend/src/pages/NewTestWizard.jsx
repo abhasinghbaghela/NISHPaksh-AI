@@ -665,6 +665,14 @@ Statutory Note:    Electronic Evidence Certified under IEA 65B
                 <button
                   type="button"
                   className="btn-secondary"
+                  onClick={() => navigate('/reports')}
+                >
+                  <FileText size={16} />
+                  <span>View in Field Reports</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
                   onClick={() => navigate('/vault')}
                 >
                   <Lock size={16} />
