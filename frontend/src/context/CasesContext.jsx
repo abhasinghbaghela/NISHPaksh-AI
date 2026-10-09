@@ -88,7 +88,15 @@ export function CasesProvider({ children }) {
     try {
       const data = await fetchCases();
       if (data && data.cases && data.cases.length > 0) {
-        setCases(data.cases);
+        setCases(prev => {
+          const merged = [...data.cases];
+          prev.forEach(p => {
+            if (!merged.find(m => m.id === p.id)) {
+              merged.push(p);
+            }
+          });
+          return merged;
+        });
       }
       setLastSyncTime(new Date().toISOString());
     } catch (err) {
