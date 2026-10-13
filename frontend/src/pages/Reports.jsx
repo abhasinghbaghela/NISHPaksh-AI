@@ -19,6 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useCases } from '../context/CasesContext';
+import { generateForensicPdfReport } from '../services/pdfReportGenerator';
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -68,7 +69,11 @@ Chain of Custody:     Sealed at Field Checkpost & Vault Archived
 =====================================================`;
   };
 
-  const handleDownload = (c) => {
+  const handleDownloadPdf = (c) => {
+    generateForensicPdfReport(c);
+  };
+
+  const handleDownloadTxt = (c) => {
     const text = generateReportText(c);
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -144,7 +149,7 @@ Chain of Custody:     Sealed at Field Checkpost & Vault Archived
         </div>
         <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--slate-500)', display: 'flex', justifyContent: 'space-between' }}>
           <span>Showing <strong>{filteredCases.length}</strong> of <strong>{cases.length}</strong> test reports</span>
-          <span>Storage: <strong>Persistent Vault & Local Cache Active</strong></span>
+          <span>Format: <strong>Official NDPS Form 52A PDF Export Active</strong></span>
         </div>
       </div>
 
@@ -247,13 +252,13 @@ Chain of Custody:     Sealed at Field Checkpost & Vault Archived
                           </button>
                           <button
                             type="button"
-                            className="btn-secondary"
-                            title="Download Report Text"
-                            style={{ padding: '6px 10px', fontSize: '12px' }}
-                            onClick={() => handleDownload(c)}
+                            className="btn-primary"
+                            title="Download Official Form 52A PDF Certificate"
+                            style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                            onClick={() => handleDownloadPdf(c)}
                           >
                             <Download size={13} />
-                            <span>Download</span>
+                            <span>Download PDF</span>
                           </button>
                         </div>
                       </td>
@@ -439,18 +444,29 @@ Chain of Custody:     Sealed at Field Checkpost & Vault Archived
                 <button
                   type="button"
                   className="btn-secondary"
+                  title="Print Certificate via Browser"
                   onClick={handlePrint}
                 >
                   <Printer size={14} />
-                  <span>Print Certificate</span>
+                  <span>Print</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  title="Download Raw Text Memo"
+                  onClick={() => handleDownloadTxt(selectedReport)}
+                >
+                  <FileText size={14} />
+                  <span>Text Memo</span>
                 </button>
                 <button
                   type="button"
                   className="btn-primary"
-                  onClick={() => handleDownload(selectedReport)}
+                  title="Download Official Form 52A PDF Certificate"
+                  onClick={() => handleDownloadPdf(selectedReport)}
                 >
                   <Download size={14} />
-                  <span>Download Report</span>
+                  <span>Download PDF Certificate</span>
                 </button>
               </div>
             </div>

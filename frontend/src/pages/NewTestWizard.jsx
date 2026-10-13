@@ -15,13 +15,15 @@ import {
   Lock,
   Layers,
   Palette,
-  ExternalLink
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import EvidenceCapture from '../components/EvidenceCapture';
 import { useAuth } from '../context/AuthContext';
 import { useCases } from '../context/CasesContext';
 import { calibrateReferenceCard, analyzeSampleReaction } from '../utils/colorCalibration';
 import { submitEvidencePackage } from '../services/api';
+import { generateForensicPdfReport } from '../services/pdfReportGenerator';
 
 export default function NewTestWizard() {
   const navigate = useNavigate();
@@ -633,34 +635,32 @@ export default function NewTestWizard() {
                 <button
                   type="button"
                   className="btn-primary"
+                  title="Download Official Form 52A PDF Certificate"
                   onClick={() => {
-                    const receiptContent = `=====================================================
-GOVERNMENT OF INDIA - MINISTRY OF HOME AFFAIRS
-NARCOTICS CONTROL BUREAU - FORM 52A RECEIPT
-=====================================================
-Case Identifier:   ${submittedCase?.id || formData.caseId}
-Evidence ID:       ${submittedCase?.evidenceId || formData.evidenceId}
-Timestamp:         ${new Date().toISOString()}
-Seizing Officer:   ${formData.officer}
-Location:          ${formData.location} (${formData.coordinates})
-Reagent Kit:       ${formData.testKit}
-Presumptive ID:    ${submittedCase?.substance || sampleAnalysis?.matchedBenchmark?.target || 'Cocaine / Alkaloid'}
-Images Ingested:   6 Total (5 Samples + 1 Reference Card)
-Digital Seal Hash: ${submittedCase?.digitalSeal || digitalSeal}
-Optical Baseline:  Reference Card CR-1 (Standard Daylight Calibrated)
-Statutory Note:    Electronic Evidence Certified under IEA 65B
-=====================================================`;
-                    const blob = new Blob([receiptContent], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `NDPS_Form52A_${submittedCase?.id || formData.caseId}.txt`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                    const caseToExport = submittedCase || {
+                      id: formData.caseId,
+                      evidenceId: formData.evidenceId,
+                      timestamp: formData.timestamp || new Date().toISOString(),
+                      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                      officer: formData.officer,
+                      location: formData.location,
+                      coordinates: formData.coordinates,
+                      testKit: formData.testKit,
+                      reagent: formData.reagent,
+                      sampleType: formData.sampleType,
+                      substance: sampleAnalysis?.matchedBenchmark?.target || 'Cocaine / Alkaloid',
+                      confidence: sampleAnalysis?.confidence || 92,
+                      status: 'Verified',
+                      digitalSeal: submittedCase?.digitalSeal || digitalSeal,
+                      sampleImages: sampleImages,
+                      referenceCardImage: referenceCard
+                    };
+                    generateForensicPdfReport(caseToExport);
                   }}
                 >
-                  <FileText size={16} />
-                  <span>Download Form 52A Receipt</span>
+                  <Download size={16} />
+                  <span>Download Form 52A Certificate (PDF)</span>
                 </button>
                 <button
                   type="button"

@@ -15,6 +15,7 @@ import {
   Download
 } from 'lucide-react';
 import { useCases } from '../context/CasesContext';
+import { generateForensicPdfReport } from '../services/pdfReportGenerator';
 
 export default function Cases() {
   const { cases } = useCases();
@@ -287,13 +288,22 @@ export default function Cases() {
               )}
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button
                 type="button"
                 className="btn-secondary"
                 onClick={() => setSelectedCase(null)}
               >
                 Close
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                title="Download Official Form 52A PDF Certificate"
+                onClick={() => generateForensicPdfReport(selectedCase)}
+              >
+                <Download size={14} />
+                <span>Download PDF Certificate</span>
               </button>
             </div>
           </div>
