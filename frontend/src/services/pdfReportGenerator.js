@@ -20,7 +20,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   const margin = 14;
   const contentWidth = pageWidth - (margin * 2); // 182mm
 
-  // Colors
+  // Official Theme Colors
   const navy = [11, 60, 140];       // #0B3C8C
   const darkNavy = [5, 30, 70];     // #051E46
   const gold = [217, 119, 6];       // #D97706
@@ -98,7 +98,6 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   doc.setLineWidth(0.4);
   doc.roundedRect(margin, y, contentWidth, 38, 2, 2, 'FD');
 
-  // Section Label
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(...navy);
@@ -143,7 +142,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   // ------------------------------------------
   // SECTION 2: CHEMICAL & REAGENT FORENSIC FINDINGS
   // ------------------------------------------
-  doc.setFillColor(240, 246, 255); // Light blue tint
+  doc.setFillColor(240, 246, 255);
   doc.setDrawColor(186, 215, 255);
   doc.roundedRect(margin, y, contentWidth, 42, 2, 2, 'FD');
 
@@ -155,7 +154,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   doc.setDrawColor(186, 215, 255);
   doc.line(margin + 4, y + 6.5, margin + contentWidth - 4, y + 6.5);
 
-  // Substance highlight badge
+  // Substance badge
   doc.setFillColor(...navy);
   doc.roundedRect(margin + 4, y + 9, 70, 10, 1.5, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
@@ -163,7 +162,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   doc.setFontSize(9.5);
   doc.text(`PRESUMPTIVE: ${c.substance || 'Presumptive Sample'}`, margin + 6, y + 15.5);
 
-  // Confidence rating pill
+  // Confidence pill
   const confidenceVal = c.confidence || 92;
   doc.setFillColor(...green);
   doc.roundedRect(margin + 78, y + 9, 44, 10, 1.5, 1.5, 'F');
