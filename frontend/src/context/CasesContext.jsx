@@ -195,6 +195,10 @@ export function CasesProvider({ children }) {
         confidence: newCase.confidence || 92,
         status: newCase.status || 'Verified',
         digitalSeal: newCase.digitalSeal,
+        witness1Name: newCase.witness1Name,
+        witness1Id: newCase.witness1Id,
+        witness1Phone: newCase.witness1Phone,
+        suspectName: newCase.suspectName,
         sampleImagesCount: (newCase.sampleImages || []).length,
         hasReferenceCard: !!newCase.referenceCardImage
       };

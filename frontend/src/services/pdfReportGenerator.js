@@ -96,7 +96,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   doc.setFillColor(...slate50);
   doc.setDrawColor(...slate200);
   doc.setLineWidth(0.4);
-  doc.roundedRect(margin, y, contentWidth, 38, 2, 2, 'FD');
+  doc.roundedRect(margin, y, contentWidth, 44, 2, 2, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
@@ -108,7 +108,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
 
   const col1X = margin + 4;
   const col2X = margin + (contentWidth / 2) + 2;
-  let fieldY = y + 12;
+  let fieldY = y + 11.5;
 
   const renderField = (x, currY, label, value, isHighlight = false) => {
     doc.setFont('helvetica', 'normal');
@@ -117,7 +117,7 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
     doc.text(label, x, currY);
 
     doc.setFont('helvetica', isHighlight ? 'bold' : 'bold');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(isHighlight ? navy[0] : slate900[0], isHighlight ? navy[1] : slate900[1], isHighlight ? navy[2] : slate900[2]);
     doc.text(String(value || 'N/A'), x + 38, currY);
   };
@@ -125,19 +125,26 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   renderField(col1X, fieldY, 'Case Identifier:', c.id || 'NDPS-2026-UNSPECIFIED', true);
   renderField(col2X, fieldY, 'Report ID:', `REP-${(c.id || '').slice(-6) || '000000'}`, true);
 
-  fieldY += 6;
+  fieldY += 5.5;
   renderField(col1X, fieldY, 'Evidence ID Tag:', c.evidenceId || 'EVD-2026-PENDING');
   renderField(col2X, fieldY, 'Date & Time:', `${c.date || 'N/A'} ${c.time || ''}`);
 
-  fieldY += 6;
+  fieldY += 5.5;
   renderField(col1X, fieldY, 'Seizing Officer:', c.officer || 'Field Investigating Officer');
   renderField(col2X, fieldY, 'Police Station/Unit:', c.station || 'Field Seizure Checkpost');
 
-  fieldY += 6;
+  fieldY += 5.5;
   renderField(col1X, fieldY, 'Seizure Location:', c.location || 'Field Seizure Site');
   renderField(col2X, fieldY, 'GPS Coordinates:', c.coordinates || '28.6139° N, 77.2090° E');
 
-  y += 43;
+  fieldY += 5.5;
+  const witnessLabel = c.witness1Name
+    ? `${c.witness1Name} (${c.witness1Id || 'Panch'})`
+    : 'Sh. Mohan Lal (Panch Witness)';
+  renderField(col1X, fieldY, 'Panch Witness:', witnessLabel);
+  renderField(col2X, fieldY, 'Suspect Name:', c.suspectName || 'Harpreet Singh @ Happy');
+
+  y += 48;
 
   // ------------------------------------------
   // SECTION 2: CHEMICAL & REAGENT FORENSIC FINDINGS
@@ -321,7 +328,9 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   };
 
   drawSigBox(margin + 2, 'Seizing Field Officer', 'Sign & Seal');
-  drawSigBox(margin + 4 + sigBoxW, 'Independent Witness (Panch)', 'Attestation');
+  const witnessSigTitle = c.witness1Name || 'Independent Witness (Panch)';
+  const witnessSigSub = c.witness1Id ? `${c.witness1Id.slice(0, 20)} (Attested)` : 'Panch Attestation';
+  drawSigBox(margin + 4 + sigBoxW, witnessSigTitle, witnessSigSub);
   drawSigBox(margin + 6 + (sigBoxW * 2), 'Magistrate / Gazetted Officer', 'NDPS 52A Endorsement');
 
   drawFooter(1, 2);

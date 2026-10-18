@@ -191,6 +191,22 @@ export default function Cases() {
                   <span className="meta-label">Digital Cryptographic Seal</span>
                   <code className="meta-seal">{selectedCase.digitalSeal || 'SHA256:7f83b1657ff1...'}</code>
                 </div>
+                <div className="meta-box" style={{ gridColumn: '1 / -1' }}>
+                  <span className="meta-label">Independent Panch Witness (NDPS Sec 52A)</span>
+                  <strong className="meta-val" style={{ color: '#16A34A' }}>
+                    {selectedCase.witness1Name || 'Sh. Mohan Lal'} {selectedCase.witness1Age ? `(${selectedCase.witness1Age} Yrs)` : ''} • {selectedCase.witness1Id || 'Aadhaar Verified'}
+                  </strong>
+                  {selectedCase.witness1Address && (
+                    <small style={{ color: 'var(--slate-500)', display: 'block', marginTop: '2px' }}>
+                      Address: {selectedCase.witness1Address} {selectedCase.witness1Phone ? `• Phone: ${selectedCase.witness1Phone}` : ''}
+                    </small>
+                  )}
+                  {selectedCase.suspectName && (
+                    <small style={{ color: 'var(--slate-600)', display: 'block', marginTop: '2px', fontWeight: 600 }}>
+                      Intercepted Suspect: {selectedCase.suspectName} {selectedCase.suspectRemarks ? `(${selectedCase.suspectRemarks})` : ''}
+                    </small>
+                  )}
+                </div>
               </div>
 
               {/* Saved Images Section: 5 Sample Images + 1 Reference Card */}
