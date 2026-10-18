@@ -19,7 +19,18 @@ import {
   getDownloadURL
 } from 'firebase/storage';
 
-// 1. Resolve Configuration from LocalStorage or Vite Environment Variables
+// Default project config from Firebase Console
+export const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBbUk_AvncvsoosFvdIBwXzkNLHAgjLavo",
+  authDomain: "nishpaksh-ai.firebaseapp.com",
+  projectId: "nishpaksh-ai",
+  storageBucket: "nishpaksh-ai.firebasestorage.app",
+  messagingSenderId: "279796956270",
+  appId: "1:279796956270:web:b111777d49fa547270fa7f",
+  measurementId: "G-QCJMN38L4S"
+};
+
+// 1. Resolve Configuration from LocalStorage, Vite Environment Variables, or Default
 export function getStoredFirebaseConfig() {
   try {
     const custom = localStorage.getItem('nishpaksh_firebase_config');
@@ -34,19 +45,19 @@ export function getStoredFirebaseConfig() {
   }
 
   const envConfig = {
-    apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env?.VITE_FIREBASE_APP_ID || ''
+    apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
+    authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT_FIREBASE_CONFIG.authDomain,
+    projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || DEFAULT_FIREBASE_CONFIG.projectId,
+    storageBucket: import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT_FIREBASE_CONFIG.storageBucket,
+    messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+    appId: import.meta.env?.VITE_FIREBASE_APP_ID || DEFAULT_FIREBASE_CONFIG.appId
   };
 
   if (envConfig.apiKey && envConfig.projectId) {
-    return { config: envConfig, source: 'env' };
+    return { config: envConfig, source: 'active' };
   }
 
-  return { config: null, source: 'none' };
+  return { config: DEFAULT_FIREBASE_CONFIG, source: 'default' };
 }
 
 let firebaseApp = null;
