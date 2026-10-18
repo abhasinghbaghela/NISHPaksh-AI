@@ -25,3 +25,7 @@ Thumbs.db
 
 # Local Data Storage
 backend/src/data/cases.json
+
+# Firebase CLI cache
+.firebase/
+

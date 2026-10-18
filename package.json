@@ -10,6 +10,7 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
-    "start:backend": "npm --prefix backend run start"
+    "start:backend": "npm --prefix backend run start",
+    "deploy:hosting": "npm --prefix frontend run build && firebase deploy --only hosting"
   }
 }
