@@ -1,4 +1,5 @@
 import { saveCaseToVault, getAllVaultCases, getVaultCaseById } from './vaultDb.js';
+import { saveCaseToFirebase } from './firebase.js';
 
 // Dynamic API base: check environment variable or default to relative /api
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
@@ -201,6 +202,13 @@ export async function submitEvidencePackage(packageData) {
     persistMetadata(canonicalCase);
   } catch (localErr) {
     console.warn('Local vault pre-save warning:', localErr);
+  }
+
+  // 1B. Sync to Firebase Cloud Firestore for real-time sharing across all roles & devices
+  try {
+    await saveCaseToFirebase(canonicalCase);
+  } catch (cloudErr) {
+    console.warn('Firebase cloud sync notice:', cloudErr);
   }
 
   // 2. Transmit to backend API if available

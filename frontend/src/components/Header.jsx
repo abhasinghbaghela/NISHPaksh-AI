@@ -1,16 +1,32 @@
 import React from 'react';
-import { Menu, Bell, Shield, User, ChevronDown, LogOut } from 'lucide-react';
+import { Menu, Bell, Shield, User, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function Header({ onMenuClick, isOnline = true }) {
-  const { user, switchRole, logout } = useAuth();
+export default function Header({ onMenuClick }) {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const getRoleBadgeStyle = (roleKey) => {
+    switch (roleKey) {
+      case 'FSL_LAB':
+        return { label: 'FSL Lab Analyst', bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' };
+      case 'ZONAL_HQ':
+        return { label: 'Zonal Command HQ', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' };
+      case 'COURT':
+        return { label: 'Special Judge (NDPS)', bg: '#F3E8FF', color: '#6D28D9', border: '#DDD6FE' };
+      case 'FIELD_OFFICER':
+      default:
+        return { label: 'Field Officer', bg: '#DCFCE7', color: '#15803D', border: '#BBF7D0' };
+    }
+  };
+
+  const badgeStyle = getRoleBadgeStyle(user?.roleKey);
 
   return (
     <header className="header">
@@ -50,7 +66,7 @@ export default function Header({ onMenuClick, isOnline = true }) {
       <div className="header-right">
         <div className="status-badge-online">
           <span className="status-indicator-dot" />
-          <span className="hide-mobile">Online / Field Mode</span>
+          <span className="hide-mobile">Secure Session</span>
         </div>
 
         <Link to="/notifications" className="header-action-btn" aria-label="Notifications">
@@ -58,40 +74,38 @@ export default function Header({ onMenuClick, isOnline = true }) {
           <span className="header-badge-count">3</span>
         </Link>
 
-        <div className="officer-profile">
+        {/* Authenticated Officer Profile (Role is locked to authenticated identity) */}
+        <div className="officer-profile" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div className="officer-avatar">
             {user?.name ? user.name.charAt(0) : 'O'}
           </div>
           <div className="officer-details hide-mobile">
-            <span className="officer-name">{user?.name || 'Field Officer'}</span>
-            <span className="officer-role">{user?.role || 'NCB Field Division'}</span>
+            <span className="officer-name">{user?.name || 'Authorized Officer'}</span>
+            <span className="officer-role">{user?.role || 'NCB Enforcement Division'}</span>
           </div>
-          <select
-            value={user?.roleKey || 'FIELD_OFFICER'}
-            onChange={(e) => switchRole(e.target.value)}
+          {/* Static security badge - Cannot switch roles without logging out and entering password */}
+          <span
             style={{
-              border: 'none',
-              background: 'transparent',
               fontSize: '11px',
-              color: 'var(--slate-500)',
-              cursor: 'pointer',
-              outline: 'none',
-              marginLeft: '2px'
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '12px',
+              backgroundColor: badgeStyle.bg,
+              color: badgeStyle.color,
+              border: `1px solid ${badgeStyle.border}`,
+              whiteSpace: 'nowrap'
             }}
-            title="Switch User Role"
           >
-            <option value="FIELD_OFFICER">Field Officer</option>
-            <option value="FSL_LAB">FSL Lab Analyst</option>
-            <option value="ZONAL_HQ">Zonal HQ Admin</option>
-            <option value="COURT">Special Judge (NDPS)</option>
-          </select>
+            {user?.badge || badgeStyle.label}
+          </span>
         </div>
 
+        {/* Sign Out Button to switch roles securely */}
         <button
           type="button"
           className="header-logout-btn"
           onClick={handleLogout}
-          title="Sign Out / Lock Session"
+          title="Sign Out / Change Role"
           aria-label="Log Out"
         >
           <LogOut size={16} />

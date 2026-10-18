@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { fetchCases } from '../services/api.js';
 import { saveCaseToVault, getAllVaultCases } from '../services/vaultDb.js';
+import {
+  isFirebaseReady,
+  subscribeToFirebaseCases,
+  saveCaseToFirebase
+} from '../services/firebase.js';
 
 const makeSampleSvg = (label, color) => `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="%23F1F5F9"/><circle cx="160" cy="120" r="55" fill="${encodeURIComponent(color)}" stroke="%230B3C8C" stroke-width="4"/><text x="160" y="30" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="%230F172A">${encodeURIComponent(label)}</text><text x="160" y="215" font-family="sans-serif" font-size="10" text-anchor="middle" fill="%2364748B">NDPS Section 52A Sealed Evidence</text></svg>`;
 
@@ -23,6 +28,10 @@ export const INITIAL_DEMO_CASES = [
     confidence: 92,
     status: "Verified",
     digitalSeal: "SHA256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+    witness1Name: "Sh. Mohan Lal",
+    witness1Id: "Aadhaar: XXXX-XXXX-4812",
+    witness1Phone: "+91 98765 43210",
+    suspectName: "Harpreet Singh @ Happy",
     sampleImages: [
       { id: 1, label: "Sample Frame #1", url: makeSampleSvg("Sample #1 - Reagent Spot", "#0047AB"), dataUrl: makeSampleSvg("Sample #1 - Reagent Spot", "#0047AB") },
       { id: 2, label: "Sample Frame #2", url: makeSampleSvg("Sample #2 - Vial Reaction", "#0047AB"), dataUrl: makeSampleSvg("Sample #2 - Vial Reaction", "#0047AB") },
@@ -53,6 +62,8 @@ export const INITIAL_DEMO_CASES = [
     confidence: 45,
     status: "Pending FSL",
     digitalSeal: "SHA256:3a42d881ef25879a95781a7b69c4d9b9d3b482329b3524b06a236cd0a3b2b512",
+    witness1Name: "Sh. Mohan Lal",
+    witness1Id: "Aadhaar: XXXX-XXXX-4812",
     sampleImages: [],
     referenceCardImage: null
   },
@@ -72,6 +83,8 @@ export const INITIAL_DEMO_CASES = [
     confidence: 87,
     status: "Verified",
     digitalSeal: "SHA256:5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    witness1Name: "Sh. Mohan Lal",
+    witness1Id: "Aadhaar: XXXX-XXXX-4812",
     sampleImages: [],
     referenceCardImage: null
   }
@@ -104,11 +117,12 @@ export function CasesProvider({ children }) {
   const [cases, setCases] = useState(getSynchronousInitialCases);
   const [loading, setLoading] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(new Date().toISOString());
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
 
   const loadCases = async () => {
     setLoading(true);
     try {
-      // 1. First retrieve all stored cases from IndexedDB vault (handles high-res images)
+      // 1. Retrieve stored cases from IndexedDB vault (handles high-res images)
       let vaultRecords = [];
       try {
         vaultRecords = await getAllVaultCases();
@@ -124,28 +138,18 @@ export function CasesProvider({ children }) {
           backendCases = data.cases;
         }
       } catch (apiErr) {
-        console.warn('Backend fetch warning, running offline vault mode:', apiErr);
+        // running offline vault
       }
 
-      // 3. Intelligently merge all sources (Backend + IndexedDB Vault + Demo Cases)
+      // 3. Intelligently merge all sources
       setCases(prev => {
         const map = new Map();
-
-        // Seed with demo cases
         INITIAL_DEMO_CASES.forEach(c => map.set(c.id, c));
-
-        // Merge existing state
         prev.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
-
-        // Merge IndexedDB records (has full images and complete forensic objects)
         vaultRecords.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
-
-        // Merge backend records
         backendCases.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
 
         const mergedList = Array.from(map.values());
-
-        // Sort descending by timestamp or date
         return mergedList.sort((a, b) => {
           const tA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
           const tB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
@@ -163,20 +167,60 @@ export function CasesProvider({ children }) {
 
   useEffect(() => {
     loadCases();
+
+    // 4. Setup Real-Time Firebase Cloud Subscription
+    // Listens for cases submitted from other phones/computers across all 4 roles!
+    let unsubscribeFirebase = () => {};
+    try {
+      unsubscribeFirebase = subscribeToFirebaseCases((cloudCases) => {
+        if (Array.isArray(cloudCases) && cloudCases.length > 0) {
+          setCases(prev => {
+            const map = new Map();
+            INITIAL_DEMO_CASES.forEach(c => map.set(c.id, c));
+            prev.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
+            cloudCases.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
+
+            const sorted = Array.from(map.values()).sort((a, b) => {
+              const tA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+              const tB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+              return tB - tA;
+            });
+            return sorted;
+          });
+          setIsCloudSynced(true);
+          setLastSyncTime(new Date().toISOString());
+        }
+      });
+    } catch (fbErr) {
+      console.warn('Firebase real-time sync notice:', fbErr);
+    }
+
+    return () => {
+      if (typeof unsubscribeFirebase === 'function') {
+        unsubscribeFirebase();
+      }
+    };
   }, []);
 
   const addCaseToState = (newCase) => {
     if (!newCase || !newCase.id) return;
 
-    // 1. Immediately update React state (top of list)
+    // 1. Immediately update React state on current device
     setCases(prev => [newCase, ...prev.filter(c => c.id !== newCase.id)]);
 
-    // 2. Persist full case with images into IndexedDB vault
+    // 2. Persist full case with images into IndexedDB vault (device-local offline backup)
     saveCaseToVault(newCase).catch(err => {
       console.warn('Failed saving to IndexedDB vault:', err);
     });
 
-    // 3. Persist lightweight metadata in localStorage for synchronous fast boot
+    // 3. Push to Firebase Cloud Firestore for real-time sync across other devices/roles
+    saveCaseToFirebase(newCase).then((res) => {
+      if (res) setIsCloudSynced(true);
+    }).catch(err => {
+      console.warn('Firebase cloud sync notice:', err);
+    });
+
+    // 4. Persist lightweight metadata in localStorage for synchronous fast boot
     try {
       const meta = {
         id: newCase.id,
@@ -226,6 +270,8 @@ export function CasesProvider({ children }) {
       cases,
       loading,
       lastSyncTime,
+      isCloudSynced,
+      isFirebaseReady: isFirebaseReady(),
       loadCases,
       addCaseToState,
       getCaseById
