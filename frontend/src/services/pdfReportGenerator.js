@@ -20,16 +20,16 @@ export function generateForensicPdfReport(caseRecord, options = {}) {
   const margin = 14;
   const contentWidth = pageWidth - (margin * 2); // 182mm
 
-  // Official Theme Colors (Charcoal + Violet + Lavender)
-  const navy = [109, 40, 217];       // Royal Violet #6D28D9
-  const darkNavy = [20, 19, 29];     // Deep Charcoal #14131D
-  const gold = [217, 119, 6];        // Amber Accent
-  const slate900 = [23, 18, 38];     // Charcoal Deep
-  const slate700 = [65, 55, 89];     // Charcoal Mid
-  const slate500 = [126, 114, 152];  // Lavender Slate
-  const slate200 = [232, 226, 245];  // Lavender Border
-  const slate50 = [250, 248, 255];   // Lavender Mist Canvas
-  const green = [16, 185, 129];      // Emerald Accent
+  // Official Theme Colors
+  const navy = [11, 60, 140];       // #0B3C8C
+  const darkNavy = [5, 30, 70];     // #051E46
+  const gold = [217, 119, 6];       // #D97706
+  const slate900 = [15, 23, 42];    // #0F172A
+  const slate700 = [51, 65, 85];    // #334155
+  const slate500 = [100, 116, 139]; // #64748B
+  const slate200 = [226, 232, 240]; // #E2E8F0
+  const slate50 = [248, 250, 252];  // #F8FAFC
+  const green = [16, 149, 93];      // #10955D
 
   // Helpers
   const drawHeader = (titleSuffix = '') => {

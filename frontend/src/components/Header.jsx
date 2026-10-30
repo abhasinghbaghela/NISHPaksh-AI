@@ -15,14 +15,14 @@ export default function Header({ onMenuClick }) {
   const getRoleBadgeStyle = (roleKey) => {
     switch (roleKey) {
       case 'FSL_LAB':
-        return { label: 'FSL Lab Analyst', bg: '#F3E8FF', color: '#6D28D9', border: '#DDD6FE' };
+        return { label: 'FSL Lab Analyst', bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' };
       case 'ZONAL_HQ':
-        return { label: 'Zonal Command HQ', bg: '#EDE9FE', color: '#5B21B6', border: '#C4B5FD' };
+        return { label: 'Zonal Command HQ', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' };
       case 'COURT':
-        return { label: 'Special Judge (NDPS)', bg: '#FAF5FF', color: '#7C3AED', border: '#E9D5FF' };
+        return { label: 'Special Judge (NDPS)', bg: '#F3E8FF', color: '#6D28D9', border: '#DDD6FE' };
       case 'FIELD_OFFICER':
       default:
-        return { label: 'Field Officer', bg: '#F3E8FF', color: '#6D28D9', border: '#DDD6FE' };
+        return { label: 'Field Officer', bg: '#DCFCE7', color: '#15803D', border: '#BBF7D0' };
     }
   };
 

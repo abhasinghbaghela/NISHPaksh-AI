@@ -100,14 +100,14 @@ export default function Sidebar({ onItemClick }) {
   const getRoleBadge = (roleKey) => {
     switch (roleKey) {
       case 'FSL_LAB':
-        return { label: 'Forensic Lab', color: '#EDE9FE', bg: 'rgba(124, 58, 237, 0.28)', border: '#8B5CF6' };
+        return { label: 'Forensic Lab', color: '#D97706', bg: '#FEF3C7' };
       case 'ZONAL_HQ':
-        return { label: 'Zonal Command', color: '#DDD6FE', bg: 'rgba(109, 40, 217, 0.32)', border: '#A78BFA' };
+        return { label: 'Zonal Command', color: '#2563EB', bg: '#EFF6FF' };
       case 'COURT':
-        return { label: 'Judicial Bench', color: '#F3E8FF', bg: 'rgba(139, 92, 246, 0.30)', border: '#C4B5FD' };
+        return { label: 'Judicial Bench', color: '#7C3AED', bg: '#F3E8FF' };
       case 'FIELD_OFFICER':
       default:
-        return { label: 'Field Officer', color: '#EDE9FE', bg: 'rgba(124, 58, 237, 0.30)', border: '#8B5CF6' };
+        return { label: 'Field Officer', color: '#16A34A', bg: '#DCFCE7' };
     }
   };
 
@@ -116,9 +116,9 @@ export default function Sidebar({ onItemClick }) {
   return (
     <aside className="sidebar">
       {/* Role Indicator Banner */}
-      <div style={{ padding: '12px 16px 8px 16px', borderBottom: '1px solid #28263C', background: '#191826' }}>
+      <div style={{ padding: '12px 16px 8px 16px', borderBottom: '1px solid var(--slate-200)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#A8A3C2', fontWeight: 700 }}>
+          <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--slate-500)', fontWeight: 700 }}>
             Active Role
           </span>
           <span
@@ -128,8 +128,7 @@ export default function Sidebar({ onItemClick }) {
               padding: '2px 8px',
               borderRadius: '12px',
               color: badge.color,
-              backgroundColor: badge.bg,
-              border: `1px solid ${badge.border}`
+              backgroundColor: badge.bg
             }}
           >
             {badge.label}

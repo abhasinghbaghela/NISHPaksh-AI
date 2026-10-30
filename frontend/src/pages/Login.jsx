@@ -51,7 +51,7 @@ export default function Login() {
         </div>
 
         {error && (
-          <div style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.16)', border: '1px solid rgba(239, 68, 68, 0.36)', borderRadius: '6px', fontSize: '12px', color: '#FCA5A5', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '6px', fontSize: '12px', color: '#B91C1C', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
@@ -93,53 +93,50 @@ export default function Login() {
         </form>
 
         {/* Official Authorized Credentials Directory (Quick-Fill for Evaluators/Testing) */}
-        <div style={{ marginTop: '24px', borderTop: '1px solid rgba(221, 214, 254, 0.14)', paddingTop: '16px' }}>
+        <div style={{ marginTop: '24px', borderTop: '1px solid var(--slate-200)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-            <Key size={14} style={{ color: '#A78BFA' }} />
-            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#DDD6FE' }}>
+            <Key size={14} className="text-navy" />
+            <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--slate-500)' }}>
               Authorized Credentials Directory
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {officialCredentials.map((cred) => {
-              const isSelected = officerId === cred.officerId;
-              return (
-                <div
-                  key={cred.roleKey}
-                  onClick={() => handleQuickFill(cred)}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    background: isSelected ? 'rgba(124, 58, 237, 0.24)' : '#211F33',
-                    border: `1px solid ${isSelected ? '#8B5CF6' : '#33304E'}`,
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                  title="Click to fill credentials"
-                >
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>
-                      {cred.title}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#B5AFD0', fontFamily: 'monospace', marginTop: '2px' }}>
-                      ID: <strong style={{ color: '#EDE9FE' }}>{cred.officerId}</strong> • Pass: <code style={{ color: '#C4B5FD', background: '#191827', padding: '1px 4px', borderRadius: '4px' }}>{cred.password}</code>
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {officialCredentials.map((cred) => (
+              <div
+                key={cred.roleKey}
+                onClick={() => handleQuickFill(cred)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: officerId === cred.officerId ? 'var(--primary-light)' : 'var(--slate-50)',
+                  border: `1px solid ${officerId === cred.officerId ? 'var(--primary-navy)' : 'var(--slate-200)'}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Click to fill credentials"
+              >
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--slate-900)' }}>
+                    {cred.title}
                   </div>
-                  <button
-                    type="button"
-                    className="btn-text"
-                    style={{ fontSize: '11px', color: '#C4B5FD', display: 'flex', alignItems: 'center', gap: '2px', background: 'none', border: 'none' }}
-                  >
-                    <span>Select</span>
-                    <ChevronRight size={12} />
-                  </button>
+                  <div style={{ fontSize: '11px', color: 'var(--slate-600)', fontFamily: 'monospace' }}>
+                    ID: <strong>{cred.officerId}</strong> • Pass: <code>{cred.password}</code>
+                  </div>
                 </div>
-              );
-            })}
+                <button
+                  type="button"
+                  className="btn-text"
+                  style={{ fontSize: '11px', color: 'var(--primary-navy)', display: 'flex', alignItems: 'center', gap: '2px' }}
+                >
+                  <span>Select</span>
+                  <ChevronRight size={12} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
