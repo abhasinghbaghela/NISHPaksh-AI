@@ -1,5 +1,5 @@
 import { saveCaseToVault, getAllVaultCases, getVaultCaseById } from './vaultDb.js';
-import { saveCaseToFirebase } from './firebase.js';
+import { saveCaseToFirebase, getAllFirebaseCases } from './firebase.js';
 
 // Dynamic API base: check environment variable or default to relative /api
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
@@ -64,7 +64,14 @@ export async function fetchCases(search = '', status = 'All') {
 
     return data;
   } catch (err) {
-    // Backend offline: retrieve cases directly from IndexedDB vault
+    // Backend offline / static hosting: retrieve cases from Firestore and IndexedDB vault
+    let cloudCases = [];
+    try {
+      cloudCases = await getAllFirebaseCases();
+    } catch (fbErr) {
+      console.warn('Firebase cases fetch notice:', fbErr);
+    }
+
     let localCases = [];
     try {
       localCases = await getAllVaultCases();
@@ -72,24 +79,35 @@ export async function fetchCases(search = '', status = 'All') {
       console.warn('IndexedDB read error:', dbErr);
     }
 
-    // Fallback to metadata from localStorage if IndexedDB returned nothing
-    if (!localCases || localCases.length === 0) {
+    // Merge cloud and local cases
+    const mergedMap = new Map();
+    if (Array.isArray(cloudCases)) {
+      cloudCases.forEach(c => mergedMap.set(c.id, c));
+    }
+    if (Array.isArray(localCases)) {
+      localCases.forEach(c => mergedMap.set(c.id, { ...(mergedMap.get(c.id) || {}), ...c }));
+    }
+
+    let resultCases = Array.from(mergedMap.values());
+
+    // Fallback to metadata from localStorage if nothing found
+    if (!resultCases || resultCases.length === 0) {
       try {
         const stored = localStorage.getItem('nishpaksh_local_cases_meta');
-        if (stored) localCases = JSON.parse(stored);
+        if (stored) resultCases = JSON.parse(stored);
       } catch (e) {
         // ignore
       }
     }
 
     // Filter in-memory if search / status params provided
-    if (localCases && localCases.length > 0) {
+    if (resultCases && resultCases.length > 0) {
       if (status && status !== 'All' && status !== 'All Status') {
-        localCases = localCases.filter(c => (c.status || '').toLowerCase() === status.toLowerCase());
+        resultCases = resultCases.filter(c => (c.status || '').toLowerCase() === status.toLowerCase());
       }
       if (search) {
         const q = search.toLowerCase();
-        localCases = localCases.filter(c =>
+        resultCases = resultCases.filter(c =>
           (c.id && c.id.toLowerCase().includes(q)) ||
           (c.evidenceId && c.evidenceId.toLowerCase().includes(q)) ||
           (c.substance && c.substance.toLowerCase().includes(q)) ||
@@ -99,7 +117,7 @@ export async function fetchCases(search = '', status = 'All') {
       }
     }
 
-    return { success: true, cases: localCases || [], isOffline: true };
+    return { success: true, cases: resultCases || [], isOffline: true };
   }
 }
 
@@ -205,8 +223,9 @@ export async function submitEvidencePackage(packageData) {
   }
 
   // 1B. Sync to Firebase Cloud Firestore for real-time sharing across all roles & devices
+  let cloudCase = null;
   try {
-    await saveCaseToFirebase(canonicalCase);
+    cloudCase = await saveCaseToFirebase(canonicalCase);
   } catch (cloudErr) {
     console.warn('Firebase cloud sync notice:', cloudErr);
   }
@@ -227,13 +246,13 @@ export async function submitEvidencePackage(packageData) {
       persistMetadata(data.case);
       return data;
     }
-    return { success: true, case: canonicalCase, summary: { totalImages: 6, digitalSeal: seal } };
+    return { success: true, case: cloudCase || canonicalCase, summary: { totalImages: 6, digitalSeal: seal } };
   } catch (err) {
-    console.warn('Backend upload server unreachable, case saved permanently in local offline vault:', err.message);
+    console.warn('Backend upload server unreachable, case saved permanently in cloud & offline vault:', err.message);
     return {
       success: true,
-      message: 'Evidence package saved securely (Offline Vault Mode).',
-      case: canonicalCase,
+      message: 'Evidence package saved securely (Cloud & Local Vault Mode).',
+      case: cloudCase || canonicalCase,
       summary: {
         totalImages: 6,
         sampleImagesCount: (packageData.samples || []).length,

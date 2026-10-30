@@ -41,7 +41,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`[NISHPaksh AI] Backend server listening on http://localhost:${PORT}`);
-  console.log(`[NISHPaksh AI] Serving uploads from: ${uploadsPath}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[NISHPaksh AI] Backend server listening on http://localhost:${PORT}`);
+    console.log(`[NISHPaksh AI] Serving uploads from: ${uploadsPath}`);
+  });
+}
+
+export default app;

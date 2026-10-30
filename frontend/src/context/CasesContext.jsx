@@ -4,7 +4,8 @@ import { saveCaseToVault, getAllVaultCases } from '../services/vaultDb.js';
 import {
   isFirebaseReady,
   subscribeToFirebaseCases,
-  saveCaseToFirebase
+  saveCaseToFirebase,
+  getAllFirebaseCases
 } from '../services/firebase.js';
 
 const makeSampleSvg = (label, color) => `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="%23F1F5F9"/><circle cx="160" cy="120" r="55" fill="${encodeURIComponent(color)}" stroke="%230B3C8C" stroke-width="4"/><text x="160" y="30" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="%230F172A">${encodeURIComponent(label)}</text><text x="160" y="215" font-family="sans-serif" font-size="10" text-anchor="middle" fill="%2364748B">NDPS Section 52A Sealed Evidence</text></svg>`;
@@ -130,7 +131,18 @@ export function CasesProvider({ children }) {
         console.warn('IndexedDB retrieval warning:', dbErr);
       }
 
-      // 2. Fetch from backend API
+      // 1B. Retrieve cases from Firebase Cloud
+      let cloudRecords = [];
+      try {
+        cloudRecords = await getAllFirebaseCases();
+        if (cloudRecords && cloudRecords.length > 0) {
+          setIsCloudSynced(true);
+        }
+      } catch (fbErr) {
+        console.warn('Firebase retrieval notice:', fbErr);
+      }
+
+      // 2. Fetch from backend API (if available)
       let backendCases = [];
       try {
         const data = await fetchCases();
@@ -147,6 +159,7 @@ export function CasesProvider({ children }) {
         INITIAL_DEMO_CASES.forEach(c => map.set(c.id, c));
         prev.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
         vaultRecords.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
+        cloudRecords.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
         backendCases.forEach(c => map.set(c.id, { ...(map.get(c.id) || {}), ...c }));
 
         const mergedList = Array.from(map.values());

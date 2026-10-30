@@ -108,6 +108,71 @@ export function saveFirebaseConfig(configObj) {
 }
 
 /**
+ * Compress base64 image down to small thumbnail (< 25KB) for Firestore document embedding.
+ * Prevents Firestore from rejecting documents when they exceed the 1,048,576 bytes limit.
+ */
+async function createLightweightThumbnail(dataUrl, maxDim = 320, quality = 0.55) {
+  if (typeof window === 'undefined' || !dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
+    return dataUrl;
+  }
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (e) {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    } catch (e) {
+      resolve(dataUrl);
+    }
+  });
+}
+
+/**
+ * Fetch all cases directly from Cloud Firestore
+ */
+export async function getAllFirebaseCases() {
+  const { db, isReady } = initFirebase();
+  if (!isReady || !db) return [];
+
+  try {
+    const casesCollection = collection(db, 'cases');
+    const snapshot = await getDocs(casesCollection);
+    const list = [];
+    snapshot.forEach(docSnap => {
+      list.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    return list;
+  } catch (err) {
+    console.warn('Firestore getDocs warning:', err.message);
+    return [];
+  }
+}
+
+/**
  * Real-Time Case Subscription
  * Listens for changes to the 'cases' collection in Firestore.
  * When ANY person on ANY device submits a new test or verifies a case,
@@ -152,6 +217,68 @@ export async function saveCaseToFirebase(caseRecord) {
 
   try {
     const cleanRecord = { ...caseRecord };
+
+    // Process sample images: either upload to Firebase Storage or compress to lightweight thumbnails
+    // to strictly obey Firestore's 1MB document limit.
+    if (Array.isArray(cleanRecord.sampleImages)) {
+      cleanRecord.sampleImages = await Promise.all(
+        cleanRecord.sampleImages.map(async (img, idx) => {
+          let url = img.url;
+          let dataUrl = img.dataUrl;
+
+          if (dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:')) {
+            try {
+              const storageUrl = await uploadImageToFirebaseStorage(dataUrl, caseRecord.id, `sample_${idx + 1}`);
+              if (storageUrl && !storageUrl.startsWith('data:')) {
+                url = storageUrl;
+                dataUrl = storageUrl;
+              } else {
+                dataUrl = await createLightweightThumbnail(dataUrl, 260, 0.5);
+                url = dataUrl;
+              }
+            } catch (err) {
+              dataUrl = await createLightweightThumbnail(dataUrl, 260, 0.5);
+              url = dataUrl;
+            }
+          }
+
+          return {
+            ...img,
+            url: url || dataUrl,
+            dataUrl: dataUrl || url
+          };
+        })
+      );
+    }
+
+    // Process reference card image
+    if (cleanRecord.referenceCardImage && cleanRecord.referenceCardImage.dataUrl) {
+      let refData = cleanRecord.referenceCardImage.dataUrl;
+      let refUrl = cleanRecord.referenceCardImage.url;
+
+      if (typeof refData === 'string' && refData.startsWith('data:')) {
+        try {
+          const storageUrl = await uploadImageToFirebaseStorage(refData, caseRecord.id, 'ref_card');
+          if (storageUrl && !storageUrl.startsWith('data:')) {
+            refUrl = storageUrl;
+            refData = storageUrl;
+          } else {
+            refData = await createLightweightThumbnail(refData, 260, 0.5);
+            refUrl = refData;
+          }
+        } catch (e) {
+          refData = await createLightweightThumbnail(refData, 260, 0.5);
+          refUrl = refData;
+        }
+      }
+
+      cleanRecord.referenceCardImage = {
+        ...cleanRecord.referenceCardImage,
+        url: refUrl,
+        dataUrl: refData
+      };
+    }
+
     // Remove functions or undefined fields
     Object.keys(cleanRecord).forEach(key => {
       if (cleanRecord[key] === undefined) delete cleanRecord[key];
@@ -161,7 +288,7 @@ export async function saveCaseToFirebase(caseRecord) {
     await setDoc(caseDocRef, cleanRecord, { merge: true });
     return cleanRecord;
   } catch (err) {
-    console.warn('Failed to save case to Firestore:', err.message);
+    console.error('Failed to save case to Firestore:', err);
     return null;
   }
 }
