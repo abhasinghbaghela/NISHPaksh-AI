@@ -9,7 +9,7 @@ import {
 
 export default function Analytics() {
   const substanceBreakdown = [
-    { name: 'Cocaine / Alkaloids (Scott Test)', count: 48, percent: 37.5, color: '#0B3C8C' },
+    { name: 'Cocaine / Alkaloids (Scott Test)', count: 48, percent: 37.5, color: '#7C3AED' },
     { name: 'Methamphetamine (Mandelin Test)', count: 36, percent: 28.1, color: '#138808' },
     { name: 'Opiates / Heroin (Marquis Test)', count: 28, percent: 21.8, color: '#7C3AED' },
     { name: 'Synthetic Cannabinoids / Others', count: 16, percent: 12.6, color: '#F59E0B' }

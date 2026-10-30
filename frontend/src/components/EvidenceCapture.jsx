@@ -269,7 +269,7 @@ export default function EvidenceCapture({
       ctx.arc(320, 240, 140, 0, Math.PI * 2);
       ctx.fillStyle = reactionColor;
       ctx.fill();
-      ctx.strokeStyle = '#0B3C8C';
+      ctx.strokeStyle = '#7C3AED';
       ctx.lineWidth = 6;
       ctx.stroke();
 
@@ -307,7 +307,7 @@ export default function EvidenceCapture({
         ctx.strokeRect(startX + c * pW, startY + r * pH, pW - 8, pH - 8);
       });
 
-      ctx.fillStyle = '#0B3C8C';
+      ctx.fillStyle = '#7C3AED';
       ctx.font = 'bold 18px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('NCB COLOR CALIBRATION REFERENCE TARGET (CR-1)', 320, 50);

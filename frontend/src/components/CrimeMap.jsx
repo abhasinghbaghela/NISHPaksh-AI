@@ -143,7 +143,7 @@ export default function CrimeMap({
             {
               featureType: 'administrative.country',
               elementType: 'geometry.stroke',
-              stylers: [{ color: '#0B3C8C' }, { weight: 1.5 }]
+              stylers: [{ color: '#7C3AED' }, { weight: 1.5 }]
             }
           ]
         });
@@ -162,7 +162,7 @@ export default function CrimeMap({
 
       filteredCases.forEach((item) => {
         const coords = parseCoordinates(item.coordinates);
-        const pinColor = SUBSTANCE_COLORS[item.substance] || '#0B3C8C';
+        const pinColor = SUBSTANCE_COLORS[item.substance] || '#7C3AED';
 
         const marker = new window.google.maps.Marker({
           position: coords,
@@ -181,7 +181,7 @@ export default function CrimeMap({
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
             <div style="padding: 8px; font-family: sans-serif; color: #0F172A; max-width: 240px;">
-              <div style="font-size: 11px; font-weight: bold; color: #0B3C8C; text-transform: uppercase;">NDPS Section 52A Case</div>
+              <div style="font-size: 11px; font-weight: bold; color: #7C3AED; text-transform: uppercase;">NDPS Section 52A Case</div>
               <div style="font-size: 14px; font-weight: 700; margin: 2px 0;">${item.id}</div>
               <div style="font-size: 12px; margin-bottom: 4px;">
                 <strong>Substance:</strong> <span style="color: ${pinColor}; font-weight: bold;">${item.substance || 'Unspecified'}</span>
@@ -439,8 +439,8 @@ export default function CrimeMap({
               <span
                 className="badge"
                 style={{
-                  backgroundColor: `${SUBSTANCE_COLORS[activePin.substance] || '#0B3C8C'}20`,
-                  color: SUBSTANCE_COLORS[activePin.substance] || '#0B3C8C',
+                  backgroundColor: `${SUBSTANCE_COLORS[activePin.substance] || '#7C3AED'}20`,
+                  color: SUBSTANCE_COLORS[activePin.substance] || '#7C3AED',
                   fontWeight: 700
                 }}
               >
